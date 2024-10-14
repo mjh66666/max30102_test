@@ -2,7 +2,7 @@
  * @Author: mojionghao
  * @Date: 2024-08-02 11:37:01
  * @LastEditors: mojionghao
- * @LastEditTime: 2024-09-04 22:47:21
+ * @LastEditTime: 2024-10-14 18:39:03
  * @FilePath: \max30102_test\components\max30102\src\max30102.c
  * @Description:
  */
@@ -66,6 +66,18 @@ esp_err_t max30102_reset(max30102_handle_t sensor)
 	return max30102_write(sensor, REG_MODE_CONFIG, 0X40);
 }
 
+static esp_err_t write_sequence(max30102_handle_t sensor, const uint8_t *regs, const uint8_t *values, size_t length)
+{
+	esp_err_t ret = ESP_OK;
+	for (size_t i = 0; i < length; ++i) {
+		ret = max30102_write(sensor, regs[i], values[i]);
+		if (ret != ESP_OK) {
+			return ret;
+		}
+	}
+	return ret;
+}
+
 esp_err_t max30102_config(max30102_handle_t sensor)
 {
 	esp_err_t ret = ESP_OK;
@@ -80,10 +92,7 @@ esp_err_t max30102_config(max30102_handle_t sensor)
 	if (ret != ESP_OK) {
 		return ret;
 	}
-	ret = max30102_reset(sensor);
-	if (ret != ESP_OK) {
-		return ret;
-	}
+	
 
 	const uint8_t *REG[] = {
 		REG_INTR_ENABLE_1,REG_INTR_ENABLE_2,REG_FIFO_WR_PTR,REG_OVF_COUNTER,REG_FIFO_RD_PTR,
@@ -94,7 +103,12 @@ esp_err_t max30102_config(max30102_handle_t sensor)
 		0XC0,0X02,0X00,0X00,0X00,0x0f,
         0x03,0x27,0X32,0X32,0X7F,0X01,
 	};
-    
+
+	ret = max30102_reset(sensor);
+	if (ret != ESP_OK) {
+		return ret;
+	}
+
 	// ret = max30102_write(sensor, REG_INTR_ENABLE_1, 0XC0);
 	// ret = max30102_write(sensor, REG_INTR_ENABLE_2, 0X02);
 	// ret = max30102_write(sensor, REG_FIFO_WR_PTR, 0X00);
@@ -108,7 +122,7 @@ esp_err_t max30102_config(max30102_handle_t sensor)
 	// ret = max30102_write(sensor, REG_PILOT_PA, 0X7F);
 	// ret = max30102_write(sensor, REG_TEMP_CONFIG, 0X01);
 
-	return ret;
+	return write_sequence(sensor, REG, data, sizeof(REG));
 }
 
 esp_err_t max30102_read_fifo(max30102_handle_t sensor, uint16_t *fifo_red, uint16_t *fifo_ir)

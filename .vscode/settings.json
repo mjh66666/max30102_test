@@ -32,7 +32,8 @@
         "ostream": "c",
         "sstream": "c",
         "blood.h": "c",
-        "esp_log.h": "c"
+        "esp_log.h": "c",
+        "max30102.h": "c"
     },
     "idf.flashType": "UART"
 }

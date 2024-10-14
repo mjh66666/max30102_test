@@ -103,7 +103,7 @@ esp_err_t Air780EG_Sendcmd(air780eg_handle_t dev, char *cmd, char *ret, char *re
 		prevDataLength = length;
 		vTaskDelay(10 / portTICK_PERIOD_MS); // 10ms
 	}
-	ESP_LOGE(air780eg, "send cmd: %s time out!",cmd);
+	ESP_LOGE(air780eg, "send cmd: %s time out!", cmd);
 	return ESP_FAIL;
 }
 
@@ -190,7 +190,7 @@ unsigned char escape_json(char *output, const char *input)
 }
 
 /**
- * @description: 
+ * @description:
  * @param {char} *json_output 输出
  * @param {Data} data_array 消息数组
  * @param {int} count 数组个数
@@ -240,15 +240,15 @@ unsigned char Air780EG_SavejsonData(char *json_output, Mqtt_Data data_array[], i
 
 //典型:AT+MPUB="test2",0,0,"{\22msg\22:\22say\22}"
 /**
- * @description: 
- * @param {air780eg_handle_t} dev 设备 
+ * @description:
+ * @param {air780eg_handle_t} dev 设备
  * @param {Mqtt_config} cfg 配置
  * @param {Data} data_array 消息数组
  * @param {int} count 消息数
  * @param {char} *respon 返回 无填null
  * @return {*}
  */
-esp_err_t Air780EG_SendMqttData(air780eg_handle_t dev, Mqtt_config cfg,Mqtt_Data data_array[], int count, char *respond)
+esp_err_t Air780EG_SendMqttData(air780eg_handle_t dev, Mqtt_config cfg, Mqtt_Data data_array[], int count, char *respond)
 {
 	esp_err_t status = ESP_OK;
 	air780eg_dev_t *device = (air780eg_dev_t *)dev;
@@ -273,6 +273,8 @@ esp_err_t Air780EG_SendMqttData(air780eg_handle_t dev, Mqtt_config cfg,Mqtt_Data
 	return status;
 }
 
+
+/****************************GPS定位部分**********************************/
 esp_err_t Air780EG_GNSSInit(air780eg_handle_t dev)
 {
 	esp_err_t status;
@@ -286,24 +288,23 @@ esp_err_t Air780EG_GNSSInit(air780eg_handle_t dev)
 		"OK\r\n",
 	};
 	for (int i = 0; i < 2; i++) {
-		status = Air780EG_Sendcmd(dev, commands[i],expectedResponses[i], ret);
+		status = Air780EG_Sendcmd(dev, commands[i], expectedResponses[i], ret);
 		vTaskDelay(100 / portTICK_PERIOD_MS);
 	}
 	return status;
 }
 
-esp_err_t Air780EG_GetGNSSData(air780eg_handle_t dev,GNSS_data* gps_data)
+esp_err_t Air780EG_GetGNSSData(air780eg_handle_t dev, GNSS_data *gps_data)
 {
 	esp_err_t status;
 	char GNSS_respond[256];
-    char *GNSS_position;
-    int count = 0; // 计数值和定位状态
-    float data[3]; // 经纬度存储
+	char *GNSS_position;
+	int count = 0; // 计数值和定位状态
+	float data[3]; // 经纬度存储
 
 	//接收
-	status = Air780EG_Sendcmd(dev,"AT+CGNSINF\r\n", "OK\r\n", GNSS_respond);
-	if(status == ESP_FAIL)
-	{
+	status = Air780EG_Sendcmd(dev, "AT+CGNSINF\r\n", "OK\r\n", GNSS_respond);
+	if (status == ESP_FAIL) {
 		ESP_LOGE(air780eg, "check position fail!");
 		return 0;
 	}
@@ -312,16 +313,15 @@ esp_err_t Air780EG_GetGNSSData(air780eg_handle_t dev,GNSS_data* gps_data)
 	//提取信息
 	while (GNSS_position != NULL) {
 
-        if (count > 3 && count < 6) {              // 取4、5
-            data[count - 3] = atof(GNSS_position); // 将相应的信息转换成浮点型之后存到数组里面
-        }
-        count++;
-        GNSS_position = strtok(NULL, ",");
-    }
+		if (count > 3 && count < 6) {              // 取4、5
+			data[count - 3] = atof(GNSS_position); // 将相应的信息转换成浮点型之后存到数组里面
+		}
+		count++;
+		GNSS_position = strtok(NULL, ",");
+	}
 
 	//返回
-	if(gps_data != NULL)
-	{
+	if (gps_data != NULL) {
 		gps_data->longitude = data[0];
 		gps_data->latitude = data[1];
 	}
